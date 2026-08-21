@@ -1,0 +1,30 @@
+{
+  "name": "agentsdk",
+  "version": "1.0.0",
+  "description": "Open source agent SDK with pluggable tools, upcoming memory management, and support for more LLM providers.",
+  "license": "ISC",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "openai": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "openai": "^7.4.0",
+    "typescript": "^7.0.2"
+  }
+}
