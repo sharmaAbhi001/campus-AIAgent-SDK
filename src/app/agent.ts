@@ -159,6 +159,20 @@ this.instruction = `
                     continue
                 }
 
+                if(functionName === "askToUser"){
+
+                    const toolResult = await tool.executor(input as string)
+                    this.messageHistory.push({
+                        role: 'user',
+                        content: JSON.stringify(toolResult)
+                    })
+                    this.notifyInterceptor({
+                        role: 'user',
+                        content: JSON.stringify(toolResult)
+                    })
+                    continue
+                }
+
                 const toolResult = await tool.executor(input as string)
                 this.messageHistory.push({
                     role: 'developer',

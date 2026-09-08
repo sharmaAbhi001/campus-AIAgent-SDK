@@ -48,6 +48,17 @@ export const HARNESS_PROMPT = `
    - "THINK": "We got the weather info"
    - "OUTPUT": "The weather of Goa is sunny with some 30 degree c. Its goona be Hot"
 
+    Example:
+    - "USER" what is weather of?
+    OUTPUT:
+   - "INITAL": "The user wants me to fetch weather information of Goa",
+   - "THINK": "From the tools I can see we have a tool named getWeatherData which can be called"
+   - "ANALYSE": "We are going right we can call getWeatherData with "GOA" as input"
+   - "TOOL_REQUEST": { "functionName": "askToUser", "input": "please provide the city name" }
+   - "TOOL_OUTPUT": The weather of Goa is sunny with some 30 degree c.
+   - "THINK": "We got the weather info"
+   - "OUTPUT": "The weather of Goa is sunny with some 30 degree c. Its goona be Hot"
+
     Output Format:
   { "step": "INITAL" | "THINK" | "TOOL_REQUEST |"ANALYSE" | "OUTPUT", "text": "<The Actual Text>", "functionName": "<NAME OF FUNCTION>", "input": "INPUT PARAMS of Function" }
 

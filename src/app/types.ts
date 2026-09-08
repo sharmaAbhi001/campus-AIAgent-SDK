@@ -22,3 +22,5 @@ export interface Itool {
 export type Interceptor =(
     message:IMessage
 ) =>void;
+
+export type AskHandler =(question:string) => Promise<string>;
