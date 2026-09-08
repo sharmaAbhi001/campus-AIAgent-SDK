@@ -1,4 +1,4 @@
-# AgentSDK
+# AgentSDK That never publish
 
 Open source agent SDK built to **learn by building** — understand how agents work internally (prompt harness, tool loop, providers) instead of treating them as a black box.
 
