@@ -1,56 +1,77 @@
-# AgentSDK That never publish
+# AgentSDK — a learning repo (not a published SDK)
 
-Open source agent SDK built to **learn by building** — understand how agents work internally (prompt harness, tool loop, providers) instead of treating them as a black box.
+This started as an agent SDK. It is **not** one any more, and it is not going to npm.
 
-Others can plug in their own LLM providers (Claude, Gemini, and more). Memory management and context management are coming shortly.
+It is a **learning repo**: a small, readable agent loop built from scratch to understand how agents actually work internally — the prompt harness, the step pipeline, the tool loop, provider swapping, and now long-term memory — instead of treating any of it as a black box.
 
-## Why this exists
+Read it, break it, rewrite it. That is the whole point.
 
-Most agent frameworks hide the internals. This project keeps the core small and readable on purpose:
+## What's inside
 
 - How a system prompt / harness drives the model
 - How tools are registered and executed
 - How providers are swapped behind one interface
 - How the THINK → TOOL_REQUEST → OUTPUT style loop runs
+- How the agent asks the human a question — as a tool, not a special case
+- How long-term memory is recalled before a run and written back after it (mem0)
 
-If you want to study the code, start with `src/app/agent.ts` and `src/provider/`.
+Start with `src/app/agent.ts`, then `src/app/config.ts` (the harness prompt), then `src/provider/`.
+
+## Memory (mem0)
+
+Memory is wired in with [mem0](https://mem0.ai) so the agent remembers a user across separate runs, not just within one loop.
+
+- **Before the loop** — `run()` calls `memclient.search(query, { filters: { user_id } })` and appends the recalled memories to the instruction, so the model starts the turn already knowing the user.
+- **After the loop** — when a run finishes on the `OUTPUT` step, the message history is sent to `memclient.add(...)`, so what happened this turn is available next time.
+
+Two things worth knowing if you are reading the code:
+
+- mem0's `Message` type only accepts `user` and `assistant` roles, while this repo's `IMessage` also has `developer` (used for tool results and error corrections). The history has to be filtered or mapped before it goes to mem0.
+- Memory is scoped by `user_id`. The id used for `search` and the id used for `add` must be the same, or recall silently returns nothing.
+
+## Asking the user a question
+
+Instead of a dedicated pipeline step, "ask the human" is registered as a **normal tool** (`askToUser` in `src/index.ts`, backed by `prompt-sync`). The executor signature — `(input: string) => Promise<string>` — already fits: the question goes in, the answer comes out.
+
+This means the tool loop handles it with no extra machinery, and the capability exists only where it makes sense: register the tool in a CLI, leave it out on a server and the model will never try to ask.
 
 ## Features (today)
 
 - Builder API: `Agent.builder().provider(...).tool(...).setInstruction(...).build()`
 - Pluggable tools via `Itool`
+- Human-in-the-loop via a plain tool
+- Long-term memory via mem0
 - Message interceptors for logging / debugging
 - OpenAI-compatible providers: OpenAI, Groq, OpenRouter, Together
 - Custom providers via the `IProvider` interface
 
-## Roadmap
+## Things still to explore
 
-- [ ] Memory management
-- [ ] Context management
+- [ ] Context management / window trimming
 - [ ] First-class Claude provider
 - [ ] First-class Gemini provider
-- [ ] More LLM backends as the community needs them
+- [ ] Better JSON step validation
+- [ ] Streaming
 
-## Install
+## Running it
 
-```bash
-npm install agentsdk openai
-```
-
-`openai` is a peer dependency (used by the OpenAI-compatible provider).
-
-Local development (from another folder):
+Not published to npm — clone and run it locally.
 
 ```bash
-npm install /path/to/AgentSDK
-npm install openai
+git clone <this repo>
+cd AgentSDK
+npm install
+npm run build
+npm start
 ```
 
-## Quick start
+You will need an OpenAI (or Groq / OpenRouter / Together) key and a mem0 key. Put them in environment variables — do not commit them.
+
+## How the pieces fit
 
 ```ts
-import { Agent, openai } from "agentsdk";
-import type { Itool } from "agentsdk";
+import { Agent, openai } from "./src/index.js";
+import type { Itool } from "./src/app/types.js";
 
 const echoTool: Itool = {
   name: "echo",
@@ -83,7 +104,7 @@ console.log(history);
 ### Other built-in providers
 
 ```ts
-import { groq, openrouter, together } from "agentsdk";
+import { groq, openrouter, together } from "./src/index.js";
 
 .provider(groq({ apiKey: process.env.GROQ_API_KEY!, model: "llama-3.3-70b-versatile" }))
 .provider(openrouter({ apiKey: process.env.OPENROUTER_API_KEY!, model: "openai/gpt-4o-mini" }))
@@ -95,7 +116,7 @@ import { groq, openrouter, together } from "agentsdk";
 Any class that implements `IProvider` works — Claude, Gemini, a local model, or a mock for tests.
 
 ```ts
-import type { IProvider, ProviderRequest, ProviderResponse } from "agentsdk";
+import type { IProvider, ProviderRequest, ProviderResponse } from "./src/provider/types.js";
 
 class MyClaudeProvider implements IProvider {
   async generate(request: ProviderRequest): Promise<ProviderResponse> {
@@ -116,36 +137,16 @@ The agent only needs `{ content: string }` back. That content should be a JSON s
 
 ```
 src/
-  index.ts                 # public exports
+  index.ts                 # entry point + the askToUser tool
   app/
-    agent.ts               # Agent + AgentBuilder + run loop
-    config.ts              # harness / pipeline prompt
+    agent.ts               # Agent + AgentBuilder + run loop + memory calls
+    config.ts              # harness / pipeline prompt + mem0 client
     types.ts               # Itool, IMessage, Interceptor
   provider/
     types.ts               # IProvider contract
     openai-compatible.ts   # shared OpenAI-compatible client
     intext.ts              # openai / groq / openrouter / together helpers
 ```
-
-## Build
-
-```bash
-npm install
-npm run build
-```
-
-Output goes to `dist/` (what gets published).
-
-## Contributing
-
-This is open source and meant to be extended:
-
-1. Fork / clone
-2. Add a provider under `src/provider/` that implements `IProvider`
-3. Export it from `src/index.ts`
-4. Open a PR
-
-Ideas that fit the roadmap well: Claude, Gemini, memory stores, context window strategies, better JSON step validation.
 
 ## License
 

@@ -30,6 +30,8 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
+    "mem0ai": "^3.1.8",
     "prompt-sync": "^4.2.0"
   }
 }

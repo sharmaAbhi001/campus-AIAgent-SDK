@@ -44,5 +44,5 @@ agent.attachTnterceptor((message)=>{
 console.log("Interceptor: ", message)
 })
 
-const response = await agent.run("What is the weather like today?");
+const response = await agent.run("Do you know my name ?");
 

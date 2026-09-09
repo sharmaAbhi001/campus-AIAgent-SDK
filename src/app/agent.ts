@@ -3,7 +3,7 @@ import type { Itool } from "./types.js";
 import type { IMessage } from "./types.js";
 import type { Interceptor } from "./types.js";
 import type { IProvider } from "../provider/types.js";
-
+import { memclient } from "./config.js";
 
 
 
@@ -97,7 +97,15 @@ this.instruction = `
     }
 
     public async run(query: string) {
+        const result = await memclient.search(query,{
+            filters:{
+             user_id: "alex"
+            }
+        })
         this.messageHistory.push({ role: 'user', content: query })
+
+     this.instruction = this.instruction.concat(`Previoues User Data : ${result.results.map(m => JSON.stringify(m.memory))})}`)
+        console.log(this.instruction)
 
         for (let i = 0; i < 50; i++) {
             const llmResponse = await this.provider.generate({
@@ -140,6 +148,11 @@ this.instruction = `
 
             // Only return history when the pipeline finishes with OUTPUT
             if (step === 'output') {
+                const message = this.messageHistory.filter(
+                   m => m.role !== 'developer'
+                ).map(m => ({role:m.role as 'user' | 'assistant', content:m.content}))
+                
+             await memclient.add(message,{ user_id: "alex" })
                 return this.messageHistory
             }
 
